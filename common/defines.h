@@ -15,6 +15,9 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#define MAJOR_VERSION 1
+#define MINOR_VERSION 0
+
 #define REQ_TEST_PROGRAMMER      0
 #define REQ_TURN_PROG_ON         1
 #define REQ_TURN_PROG_OFF        2

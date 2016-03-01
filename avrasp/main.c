@@ -429,11 +429,13 @@ usbMsgLen_t usbFunctionSetup(uint8_t data[8])
 
   if (rq->bRequest == REQ_TEST_PROGRAMMER) {
     usbOutputBuffer[0] = ERROR_OK;
-    usbOutputBuffer[1] = rq->wValue.bytes[0];
-    usbOutputBuffer[2] = rq->wValue.bytes[1];
-    usbOutputBuffer[3] = rq->wIndex.bytes[0];
-    usbOutputBuffer[4] = rq->wIndex.bytes[1];
-    return 5;
+    usbOutputBuffer[1] = MAJOR_VERSION;
+    usbOutputBuffer[2] = MINOR_VERSION;
+    usbOutputBuffer[3] = rq->wValue.bytes[0];
+    usbOutputBuffer[4] = rq->wValue.bytes[1];
+    usbOutputBuffer[5] = rq->wIndex.bytes[0];
+    usbOutputBuffer[6] = rq->wIndex.bytes[1];
+    return 7;
   } else if (rq->bRequest == REQ_TURN_PROG_ON) {
     return turnProgOn();
   } else if (rq->bRequest == REQ_TURN_PROG_OFF) {

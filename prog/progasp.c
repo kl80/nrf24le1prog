@@ -64,11 +64,11 @@ bool prog_init() {
         return false;
     }
 
-    uint8_t buf[5];
+    uint8_t buf[7];
     int res1 = usb_control_msg(handle, USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_IN,
                     REQ_TEST_PROGRAMMER,
                     0x5678, 0xDEED,
-                    (char*)buf, 5,
+                    (char*)buf, 7,
                     5000);
 
     if (res1 < 0) {
@@ -76,8 +76,15 @@ bool prog_init() {
         return false;
     }
 
-    if (res1 != 5 || buf[0] != ERROR_OK || buf[1] != 0x78 || buf[2] != 0x56 || buf[3] != 0xED || buf[4] != 0xDE) {
+    if (res1 != 7 || buf[0] != ERROR_OK || buf[3] != 0x78 || buf[4] != 0x56 || buf[5] != 0xED || buf[6] != 0xDE) {
         printf("programmer self test failed\n");
+        return false;
+    }
+
+    printf("avrasp firmware version %i.%i", buf[1], buf[2]);
+
+    if (buf[1] != MAJOR_VERSION) {
+        printf("Incorrect major version of asp firmware, expected %i", MAJOR_VERSION);
         return false;
     }
 
