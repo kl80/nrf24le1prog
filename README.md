@@ -10,10 +10,16 @@ Command line:
 - <b>nrf24le1prog erase code</b> - erases all code pages, it's not erase all which can break device, it doesn't clear infopage and nvl memory
 
 #How to build
+
 1. AVRasp - open console, go to avrasp folder, type <b>make clean hex</b>, requires avr-gcc in path. nrf24le1prog_asp.hex should be downloaded to AVRasp hardware.
 2. Command line utility - open console, go to prog folder, type <b>make clean prog</b>, requires libusb installed and added to path.
 
 #Connect to nRF24LE1
+
+#Thanks to
+
+MaxMS for his http://homes-smart.ru and ideas for programming nRF24le1 using AVRasp.<br>
+Thomas Fischl for AVRasp, http://www.fischl.de/usbasp.
 
 ----------------
 #Программатор для nRF24LE1 на основе AVRasp
@@ -29,7 +35,13 @@ Command line:
 - <b>nrf24le1prog erase code</b> - очищает память программы (16кб), не затрагивая inforpage и nvl память, безопасна для устройства.
 
 #Как собрать
+
 1. AVRasp - в консоли открыть папку avrasp, выполнить <b>make clean hex</b>, требует установленного avr-gcc? добавленного в PATH. После этого прошить nrf24le1prog_asp.hex с помощью avrdude.
 2. Утилита командной строки - в консоли открыть папку prog folder, выполнить <b>make clean prog</b>, требует libusb в переменной PATH.
 
 #Подключить nRF24LE1
+
+#Благодарности
+
+MaxMS и его сайту http://homes-smart.ru за отличные идеи и единственное описание по nrf24le1, которое можно найти на русском<br>
+Thomas Fischl за AVRasp, http://www.fischl.de/usbasp.
