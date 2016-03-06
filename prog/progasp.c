@@ -84,8 +84,10 @@ bool prog_init() {
     printf("avrasp firmware version %i.%i", buf[1], buf[2]);
 
     if (buf[1] != MAJOR_VERSION) {
-        printf("Incorrect major version of asp firmware, expected %i", MAJOR_VERSION);
+        printf(" (unsupported version, expected %i.x)\n", MAJOR_VERSION);
         return false;
+    } else {
+        printf("\n");
     }
 
     printf("programmer self test passed\n");

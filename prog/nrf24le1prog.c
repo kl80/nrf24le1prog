@@ -20,8 +20,9 @@
 #include "file.h"
 #include "progasp.h"
 
+#include "../common/defines.h"
+
 static void usage(char *name) {
-    fprintf(stderr, "nrf24le1 USBasp programmer. Based on http://homes-smart.ru, https://github.com/derekstavis/nrf24le1-libbcm2835\nusage:\n");
     fprintf(stderr, " %s test                     - check hardware by triggering WEN flag\n", name);
     fprintf(stderr, " %s write code <filename>    - write code memory from file\n", name);
     fprintf(stderr, " %s read code <filename>     - read code memory to file\n", name);
@@ -84,6 +85,9 @@ bool validate_code(const char * fname) {
 
 int main(int argc, char ** argv)
 {
+    printf("nrf24le1 USBasp programmer %i.%i. Based on http://homes-smart.ru, https://github.com/derekstavis/nrf24le1-libbcm2835\n",
+           MAJOR_VERSION, MINOR_VERSION);
+
     if (argc < 2) {   /* we need at least one argument */
         usage(argv[0]);
         return 1;
@@ -96,17 +100,20 @@ int main(int argc, char ** argv)
     sleep(1); // sometimes usb doesn't work without delay
 
     bool retcode = true;
-    if (strcasecmp(argv[1], "test") == 0) {
+    if (!strcasecmp(argv[1], "test")) {
         retcode = test_device();
-    } else if (argc > 2 && strcasecmp(argv[2], "code")) {
-        if (strcasecmp(argv[1], "write") == 0) {
+    } else if (argc > 2 && !strcasecmp(argv[2], "code")) {
+        if (!strcasecmp(argv[1], "write")) {
             retcode = write_code(argc > 3 ? argv[3] : "./main.bin");
-        } else if (strcasecmp(argv[1], "read") == 0) {
+        } else if (!strcasecmp(argv[1], "read")) {
             retcode = read_code(argc > 3 ? argv[3] : "./main-dump.bin");
-        } else if (strcasecmp(argv[1], "erase") == 0)  {
+        } else if (!strcasecmp(argv[1], "erase"))  {
             retcode = erase_program_pages() ;
-        } else if (strcasecmp(argv[1], "validate")) {
+        } else if (!strcasecmp(argv[1], "validate")) {
             retcode = validate_code(argc > 3 ? argv[3] : "./main.bin");
+        } else {
+            usage(argv[0]);
+            retcode = false;
         }
     } else {
         usage(argv[0]);
