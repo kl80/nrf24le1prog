@@ -43,5 +43,6 @@ Thomas Fischl for AVRasp, http://www.fischl.de/usbasp.
 
 #Благодарности
 
-MaxMS и его сайту http://homes-smart.ru за отличные идеи и единственное описание по nrf24le1, которое можно найти на русском<br>
+MaxMS и его сайту http://homes-smart.ru
+<br>
 Thomas Fischl за AVRasp, http://www.fischl.de/usbasp.
