@@ -49,38 +49,38 @@ uint8_t currentPage;
 // LEDs
 
 void initLeds() {
-  // setup LED control, !!! 1 is off !!!
-  DDRC = 0x03;
-  PORTC = 0x03;
+    // setup LED control, !!! 1 is off !!!
+    DDRC = 0x03;
+    PORTC = 0x03;
 }
 
 inline void turnRedLedOn() {
-  PORTC &= 0xFE;
+    PORTC &= 0xFE;
 }
 
 inline void turnRedLedOff() {
-  PORTC |= 1;
+    PORTC |= 1;
 }
 
 inline void turnYellowLedOn() {
-  PORTC &= 0xFD;
+    PORTC &= 0xFD;
 }
 
 inline void turnYellowLedOff() {
-  PORTC |= 2;
+    PORTC |= 2;
 }
 
 // -----------------------------------
 // SPI
 
 inline void spiEnable() {
-  turnYellowLedOn();
-  SPI_PORTX &= ~(1 << SPI_SS);
+    turnYellowLedOn();
+    SPI_PORTX &= ~(1 << SPI_SS);
 }
 
 inline void spiDisable() {
-  SPI_PORTX |= (1 << SPI_SS);
-  turnYellowLedOff();
+    SPI_PORTX |= (1 << SPI_SS);
+    turnYellowLedOff();
 }
 
 inline uint8_t spiReadWriteByte(uint8_t value) {
@@ -114,278 +114,278 @@ uint8_t readStatus() {
 }
 
 bool enableWrite() {
-  uint8_t status;
-  uint8_t attempts;
+    uint8_t status;
+    uint8_t attempts;
 
-  for (attempts = 0; attempts < 10; ++attempts) {
-    // set wren
+    for (attempts = 0; attempts < 10; ++attempts) {
+        // set wren
+        spiEnable();
+        spiReadWriteByte(SPICMD_WREN);
+        spiDisable();
+
+        // then check that it's set
+        status = readStatus();
+
+        if (status & FSR_WEN) {
+            return true;
+        }
+
+        _delay_ms(2);
+    }
+
+    return false;
+}
+
+bool waitWenIsCleared() {
+    uint8_t status;
+    uint8_t attempts;
+
+    for (attempts = 0; attempts < 10; ++attempts) {
+        status = readStatus();
+
+        if (!(status & FSR_WEN)) {
+            return true;
+        }
+
+        _delay_ms(2);
+    }
+
+    return false;
+}
+
+bool waitForReady() {
+    uint8_t status;
+    uint8_t attempt;
+
+    for (attempt = 0; attempt < 10; ++attempt) {
+        status = readStatus();
+
+        if (!(status & FSR_RDYN)) {
+            return true;
+        }
+
+        _delay_ms(2);
+    }
+
+    return false;
+}
+
+bool checkWen() {
+    uint8_t s1, s2, s3;
+
+    s1 = readStatus();
+
     spiEnable();
     spiReadWriteByte(SPICMD_WREN);
     spiDisable();
 
-    // then check that it's set
-    status = readStatus();
+    s2 = readStatus();
 
-    if (status & FSR_WEN) {
-      return true;
+    spiEnable();
+    spiReadWriteByte(SPICMD_WRDIS);
+    spiDisable();
+
+    s3 = readStatus();
+
+    if (!(s1 & FSR_WEN)
+            && (s2 & FSR_WEN)
+            && !(s3 & FSR_WEN)) {
+        return true;
     }
 
-    _delay_ms(2);
-  }
-
-  return false;
-}
-
-bool waitWenIsCleared() {
-  uint8_t status;
-  uint8_t attempts;
-
-  for (attempts = 0; attempts < 10; ++attempts) {
-    status = readStatus();
-
-    if (!(status & FSR_WEN)) {
-      return true;
-    }
-
-    _delay_ms(2);
-  }
-
-  return false;
-}
-
-bool waitForReady() {
-  uint8_t status;
-  uint8_t attempt;
-
-  for (attempt = 0; attempt < 10; ++attempt) {
-    status = readStatus();
-
-    if (!(status & FSR_RDYN)) {
-      return true;
-    }
-
-    _delay_ms(2);
-  }
-
-  return false;
-}
-
-bool checkWen() {
-  uint8_t s1, s2, s3;
-
-  s1 = readStatus();
-
-  spiEnable();
-  spiReadWriteByte(SPICMD_WREN);
-  spiDisable();
-
-  s2 = readStatus();
-
-  spiEnable();
-  spiReadWriteByte(SPICMD_WRDIS);
-  spiDisable();
-
-  s3 = readStatus();
-
-  if (!(s1 & FSR_WEN)
-    && (s2 & FSR_WEN)
-    && !(s3 & FSR_WEN)) {
-    return true;
-  }
-
-  return false;
+    return false;
 }
 
 void nrfReset() {
-   // pulse reset for minimum 0.2 us as per datasheet
-   PORTD &= 0xFE;
-   _delay_ms(5);
-   PORTD |= 1;
-   _delay_ms(10);
+    // pulse reset for minimum 0.2 us as per datasheet
+    PORTD &= 0xFE;
+    _delay_ms(5);
+    PORTD |= 1;
+    _delay_ms(10);
 }
 
 
 // ---------- erase page -------------
 
 usbMsgLen_t erasePage(uint8_t page) {
-  if (page > 31) {
+    if (page > 31) {
+        return 0;
+    }
+
+    if (!waitForReady()) {
+        return 0;
+    }
+
+    if (!enableWrite()) {
+        return 0;
+    }
+
+    spiEnable();
+    spiReadWriteByte(SPICMD_ERASEPAGE);
+    spiReadWriteByte(page);
+    spiDisable();
+
+    waitWenIsCleared();
+
     return 0;
-  }
-
-  if (!waitForReady()) {
-    return 0;
-  }
-
-  if (!enableWrite()) {
-    return 0;
-  }
-
-  spiEnable();
-  spiReadWriteByte(SPICMD_ERASEPAGE);
-  spiReadWriteByte(page);
-  spiDisable();
-
-  waitWenIsCleared();
-
-  return 0;
 }
 
 // ---------- read memory ----------
 
 usbMsgLen_t readMemory(uint16_t startAddr, uint16_t size) {
-  spiEnable();
+    spiEnable();
 
-  spiReadWriteByte(SPICMD_READ);
-  spiReadWriteByte(startAddr >> 8);
-  spiReadWriteByte(startAddr);
+    spiReadWriteByte(SPICMD_READ);
+    spiReadWriteByte(startAddr >> 8);
+    spiReadWriteByte(startAddr);
 
-  readBytesRemaining = size;
-  reading = 1;
+    readBytesRemaining = size;
+    reading = 1;
 
-  return USB_NO_MSG;
+    return USB_NO_MSG;
 }
 
 uint8_t usbFunctionRead(uint8_t *data, uint8_t len) {
-  uint8_t i;
+    uint8_t i;
 
-  if (!reading) {
-    return 0;
-  }
+    if (!reading) {
+        return 0;
+    }
 
-  if (len > readBytesRemaining) {
-      len = readBytesRemaining;
-  }
+    if (len > readBytesRemaining) {
+        len = readBytesRemaining;
+    }
 
-  for (i = 0; i < len; i++) {
-      data[i] = spiReadWriteByte(0);
-  }
+    for (i = 0; i < len; i++) {
+        data[i] = spiReadWriteByte(0);
+    }
 
-  readBytesRemaining -= len;
-  if (readBytesRemaining == 0 && reading) {
-    spiDisable();
-  }
+    readBytesRemaining -= len;
+    if (readBytesRemaining == 0 && reading) {
+        spiDisable();
+    }
 
-  return len;
+    return len;
 }
 
 // ---------- write memory ----------
 
 usbMsgLen_t programPage(uint16_t page, uint16_t len) {
-  if (page > 31) {
-    return 0;
-  }
+    if (page > 31) {
+        return 0;
+    }
 
-  if (!waitForReady()) {
-    return 0;
-  }
+    if (!waitForReady()) {
+        return 0;
+    }
 
-  currentPage = page;
+    currentPage = page;
 
-  writeBytesRemaining = len;
-  reading = 0;
+    writeBytesRemaining = len;
+    reading = 0;
 
-  return USB_NO_MSG;
+    return USB_NO_MSG;
 }
 
 uint8_t usbFunctionWrite(uint8_t *data, uint8_t len) {
-  uint8_t i;
-  uint16_t startAddr;
+    uint8_t i;
+    uint16_t startAddr;
 
-  if (reading) {
-    return 1;
-  }
-
-  if (len > writeBytesRemaining) {
-      len = writeBytesRemaining;
-  }
-
-  if (wrote == 0) {
-    if (!enableWrite()) {
-      return 0;
+    if (reading) {
+        return 1;
     }
 
-    spiEnable();
-    spiReadWriteByte(SPICMD_ERASEPAGE);
-    spiReadWriteByte(currentPage);
-    spiDisable();
-
-    // wait WEN flag is cleared and flash is ready
-    if (!waitWenIsCleared()) {
-      return 0;
+    if (len > writeBytesRemaining) {
+        len = writeBytesRemaining;
     }
 
-    // enable WEN flag
-    if (!enableWrite()) {
-      return 0;
+    if (wrote == 0) {
+        if (!enableWrite()) {
+            return 0;
+        }
+
+        spiEnable();
+        spiReadWriteByte(SPICMD_ERASEPAGE);
+        spiReadWriteByte(currentPage);
+        spiDisable();
+
+        // wait WEN flag is cleared and flash is ready
+        if (!waitWenIsCleared()) {
+            return 0;
+        }
+
+        // enable WEN flag
+        if (!enableWrite()) {
+            return 0;
+        }
+
+        startAddr = currentPage * 512;
+
+        // start writing
+        spiEnable();
+        spiReadWriteByte(SPICMD_PROGRAM);
+        spiReadWriteByte(startAddr >> 8);
+        spiReadWriteByte(startAddr);
     }
 
-    startAddr = currentPage * 512;
+    for (i = 0; i < len; i++) {
+        spiReadWriteByte(data[i]);
+        wrote++;
+    }
 
-    // start writing
-    spiEnable();
-    spiReadWriteByte(SPICMD_PROGRAM);
-    spiReadWriteByte(startAddr >> 8);
-    spiReadWriteByte(startAddr);
-  }
+    writeBytesRemaining -= len;
 
-  for (i = 0; i < len; i++) {
-    spiReadWriteByte(data[i]);
-    wrote++;
-  }
+    if (wrote == 512 || writeBytesRemaining == 0) {
+        wrote = 0;
+        spiDisable();
+        waitWenIsCleared();
 
-  writeBytesRemaining -= len;
+        ++currentPage;
+    }
 
-  if (wrote == 512 || writeBytesRemaining == 0) {
-    wrote = 0;
-    spiDisable();
-    waitWenIsCleared();
+    if (writeBytesRemaining == 0) {
+        return 1;
+    }
 
-    ++currentPage;
-  }
-
-  if (writeBytesRemaining == 0) {
-    return 1;
-  }
-
-  return 0;
+    return 0;
 }
 
 // ------- test nrf24le1 --------
 
 usbMsgLen_t nrfTest() {
-  if (!waitForReady()) {
-    usbOutputBuffer[0] = ERROR_READY_WAIT;
-    usbOutputBuffer[1] = usbOutputBuffer[2] = usbOutputBuffer[3] = readStatus();
+    if (!waitForReady()) {
+        usbOutputBuffer[0] = ERROR_READY_WAIT;
+        usbOutputBuffer[1] = usbOutputBuffer[2] = usbOutputBuffer[3] = readStatus();
+        return 4;
+    }
+
+    spiEnable();
+    usbOutputBuffer[1] = readStatus();
+    spiDisable();
+
+    spiEnable();
+    spiReadWriteByte(SPICMD_WREN);
+    spiDisable();
+
+    spiEnable();
+    usbOutputBuffer[2] = readStatus();
+    spiDisable();
+
+    spiEnable();
+    spiReadWriteByte(SPICMD_WRDIS);
+    spiDisable();
+
+    spiEnable();
+    usbOutputBuffer[3] = readStatus();
+    spiDisable();
+
+    if (!(usbOutputBuffer[1] & FSR_WEN) && (usbOutputBuffer[2] & FSR_WEN) && !(usbOutputBuffer[3] & FSR_WEN)) {
+        usbOutputBuffer[0] = ERROR_OK;
+    } else {
+        usbOutputBuffer[0] = ERROR_WEN_TEST_FAILED;
+    }
+
     return 4;
-  }
-
-  spiEnable();
-  usbOutputBuffer[1] = readStatus();
-  spiDisable();
-
-  spiEnable();
-  spiReadWriteByte(SPICMD_WREN);
-  spiDisable();
-
-  spiEnable();
-  usbOutputBuffer[2] = readStatus();
-  spiDisable();
-
-  spiEnable();
-  spiReadWriteByte(SPICMD_WRDIS);
-  spiDisable();
-
-  spiEnable();
-  usbOutputBuffer[3] = readStatus();
-  spiDisable();
-
-  if (!(usbOutputBuffer[1] & FSR_WEN) && (usbOutputBuffer[2] & FSR_WEN) && !(usbOutputBuffer[3] & FSR_WEN)) {
-    usbOutputBuffer[0] = ERROR_OK;
-  } else {
-    usbOutputBuffer[0] = ERROR_WEN_TEST_FAILED;
-  }
-
-  return 4;
 }
 
 usbMsgLen_t turnProgOn() {
@@ -397,7 +397,7 @@ usbMsgLen_t turnProgOn() {
     SPSR = (1 << SPI2X);
 
     // prog pin to 1
-    PORTD |= 2; 
+    PORTD |= 2;
 
     // reset to stop executing of current flow, overwise programming could be unsuccessful
     nrfReset();
@@ -413,7 +413,7 @@ usbMsgLen_t turnProgOff() {
 
     // prog pin to 0
     PORTD &= 0xFD;
-     
+
     nrfReset();
 
     progMode = 0;
@@ -423,73 +423,73 @@ usbMsgLen_t turnProgOff() {
 
 usbMsgLen_t usbFunctionSetup(uint8_t data[8])
 {
-  usbRequest_t *rq = (void *)data;
+    usbRequest_t *rq = (void *)data;
 
-  usbMsgPtr = usbOutputBuffer;
+    usbMsgPtr = usbOutputBuffer;
 
-  if (rq->bRequest == REQ_TEST_PROGRAMMER) {
-    usbOutputBuffer[0] = ERROR_OK;
-    usbOutputBuffer[1] = MAJOR_VERSION;
-    usbOutputBuffer[2] = MINOR_VERSION;
-    usbOutputBuffer[3] = rq->wValue.bytes[0];
-    usbOutputBuffer[4] = rq->wValue.bytes[1];
-    usbOutputBuffer[5] = rq->wIndex.bytes[0];
-    usbOutputBuffer[6] = rq->wIndex.bytes[1];
-    return 7;
-  } else if (rq->bRequest == REQ_TURN_PROG_ON) {
-    return turnProgOn();
-  } else if (rq->bRequest == REQ_TURN_PROG_OFF) {
-    return turnProgOff();
-  } else if (rq->bRequest == REQ_TEST_NRF) {
-    return nrfTest();  
-  } else if (rq->bRequest == REQ_PROGRAM_PAGE) {
-    return programPage(rq->wValue.word, rq->wIndex.word);
-  } else if(rq->bRequest == REQ_READ) {
-    return readMemory(rq->wValue.word, rq->wIndex.word);
-  } else if(rq->bRequest == REQ_ERASE_PAGE) {
-    return erasePage(rq->wValue.word);
-  }
+    if (rq->bRequest == REQ_TEST_PROGRAMMER) {
+        usbOutputBuffer[0] = ERROR_OK;
+        usbOutputBuffer[1] = MAJOR_VERSION;
+        usbOutputBuffer[2] = MINOR_VERSION;
+        usbOutputBuffer[3] = rq->wValue.bytes[0];
+        usbOutputBuffer[4] = rq->wValue.bytes[1];
+        usbOutputBuffer[5] = rq->wIndex.bytes[0];
+        usbOutputBuffer[6] = rq->wIndex.bytes[1];
+        return 7;
+    } else if (rq->bRequest == REQ_TURN_PROG_ON) {
+        return turnProgOn();
+    } else if (rq->bRequest == REQ_TURN_PROG_OFF) {
+        return turnProgOff();
+    } else if (rq->bRequest == REQ_TEST_NRF) {
+        return nrfTest();
+    } else if (rq->bRequest == REQ_PROGRAM_PAGE) {
+        return programPage(rq->wValue.word, rq->wIndex.word);
+    } else if(rq->bRequest == REQ_READ) {
+        return readMemory(rq->wValue.word, rq->wIndex.word);
+    } else if(rq->bRequest == REQ_ERASE_PAGE) {
+        return erasePage(rq->wValue.word);
+    }
 
-  return 0;
+    return 0;
 }
 
 /* ------------------------------------------------------------------------- */
 
 int __attribute__((noreturn)) main(void) {
-  uint8_t i;
+    uint8_t i;
 
-  initLeds();
+    initLeds();
 
-  wdt_enable(WDTO_1S);
+    wdt_enable(WDTO_1S);
 
-  // reenumerate USB on startup by disconnecting for >250ms
-  usbInit();
-  usbDeviceDisconnect(); 
-  i = 0;
-  while (--i) {
-    wdt_reset();
-    _delay_ms(1);
-  }
-  usbDeviceConnect();
-  wdt_reset();
-
-  // setup ports for RESET and PROG contolling
-  DDRD |= 3;
-
-  sei();
-
-  for (;;) {
-    // blink led in idle mode
-    if (!progMode) {
-      ++redLedBlinkCount;
-      if (redLedBlinkCount == 0) {
-        turnRedLedOn();
-      } else if (redLedBlinkCount == 0xAFFF) {
-        turnRedLedOff();
-      }
+    // reenumerate USB on startup by disconnecting for >250ms
+    usbInit();
+    usbDeviceDisconnect();
+    i = 0;
+    while (--i) {
+        wdt_reset();
+        _delay_ms(1);
     }
-
+    usbDeviceConnect();
     wdt_reset();
-    usbPoll();
-  }
+
+    // setup ports for RESET and PROG contolling
+    DDRD |= 3;
+
+    sei();
+
+    for (;;) {
+        // blink led in idle mode
+        if (!progMode) {
+            ++redLedBlinkCount;
+            if (redLedBlinkCount == 0) {
+                turnRedLedOn();
+            } else if (redLedBlinkCount == 0xAFFF) {
+                turnRedLedOff();
+            }
+        }
+
+        wdt_reset();
+        usbPoll();
+    }
 }

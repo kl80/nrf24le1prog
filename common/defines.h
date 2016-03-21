@@ -26,10 +26,10 @@
 #define REQ_PROGRAM_PAGE         5
 #define REQ_ERASE_PAGE           6
 
-#define ERROR_OK 0
-#define ERROR_READY_WAIT 1
-#define ERROR_CANNOT_SET_WEN 2
-#define ERROR_WEN_TEST_FAILED 3
+#define ERROR_OK               0
+#define ERROR_READY_WAIT       1
+#define ERROR_CANNOT_SET_WEN   2
+#define ERROR_WEN_TEST_FAILED  3
 
 
 // SPI commands

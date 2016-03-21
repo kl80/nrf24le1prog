@@ -8,7 +8,6 @@ Product {
     name: "nrf-avrasp"
 
     property string mcu: "-mmcu=atmega8"
-//    property string F_CPU: "-DF_CPU=12000000"
 
     targetName: name + ".elf"
 
@@ -47,9 +46,11 @@ Product {
 	files: [
         "./*.h",
         "./*.c",
-        "./usbdrv/usbdrv.c",
+        "./usbdrv/usbdrv.*",
+        "./usbdrv/oddebug.*",
+        "./usbdrv/usbportability.h",
         "./usbdrv/usbdrvasm.S",
-        "./usbdrv/oddebug.c",
+        "../common/defines.h",
     ]
 
 	Rule {
